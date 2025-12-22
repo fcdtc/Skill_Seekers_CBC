@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-SKILL.md Enhancement Script (Local - Using Claude Code)
-Opens a new terminal with Claude Code to enhance SKILL.md, then reports back.
-No API key needed - uses your existing Claude Code Max plan!
+SKILL.md Enhancement Script (Local - Using CodeBuddy Code)
+Opens a new terminal with CodeBuddy Code to enhance SKILL.md, then reports back.
+No API key needed - uses your existing CodeBuddy Code plan!
 
 Usage:
     skill-seekers enhance output/steam-inventory/
@@ -216,18 +216,18 @@ First, backup the original to: {self.skill_md_path.with_suffix('.md.backup').abs
         if headless:
             return self._run_headless(prompt_file, timeout)
 
-        # Terminal mode: Launch Claude Code in new terminal
-        print("🚀 Launching Claude Code in new terminal...")
+        # Terminal mode: Launch CodeBuddy Code in new terminal
+        print("🚀 Launching CodeBuddy Code in new terminal...")
         print("   This will:")
         print("   1. Open a new terminal window")
-        print("   2. Run Claude Code with the enhancement task")
-        print("   3. Claude will read the docs and enhance SKILL.md")
+        print("   2. Run CodeBuddy Code with the enhancement task")
+        print("   3. CodeBuddy will read the docs and enhance SKILL.md")
         print("   4. Terminal will auto-close when done")
         print()
 
         # Create a shell script to run in the terminal
         shell_script = f'''#!/bin/bash
-claude {prompt_file}
+codebuddy-code {prompt_file}
 echo ""
 echo "✅ Enhancement complete!"
 echo "Press any key to close..."
@@ -303,7 +303,7 @@ rm {prompt_file}
         import time
         from pathlib import Path
 
-        print("✨ Running Claude Code enhancement (headless mode)...")
+        print("✨ Running CodeBuddy Code enhancement (headless mode)...")
         print(f"   Timeout: {timeout} seconds ({timeout//60} minutes)")
         print()
 
@@ -315,13 +315,13 @@ rm {prompt_file}
         start_time = time.time()
 
         try:
-            # Run claude command directly (this WAITS for completion)
-            print("   Running: claude {prompt_file}")
+            # Run codebuddy-code command directly (this WAITS for completion)
+            print("   Running: codebuddy-code {prompt_file}")
             print("   ⏳ Please wait...")
             print()
 
             result = subprocess.run(
-                ['claude', prompt_file],
+                ['codebuddy-code', prompt_file],
                 capture_output=True,
                 text=True,
                 timeout=timeout
@@ -357,7 +357,7 @@ rm {prompt_file}
                     print(f"❌ SKILL.md not found after enhancement")
                     return False
             else:
-                print(f"❌ Claude Code returned error (exit code: {result.returncode})")
+                print(f"❌ CodeBuddy Code returned error (exit code: {result.returncode})")
                 if result.stderr:
                     print(f"   Error: {result.stderr[:200]}")
                 return False
@@ -386,10 +386,10 @@ rm {prompt_file}
             return False
 
         except FileNotFoundError:
-            print("❌ 'claude' command not found")
+            print("❌ 'codebuddy-code' command not found")
             print()
-            print("   Make sure Claude Code CLI is installed:")
-            print("   See: https://docs.claude.com/claude-code")
+            print("   Make sure CodeBuddy Code CLI is installed:")
+            print("   See: https://codebuddy.woa.com")
             print()
             print("   Try terminal mode instead: --interactive-enhancement")
 

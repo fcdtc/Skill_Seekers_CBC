@@ -1,0 +1,25 @@
+{
+  "repo": "trpc-group/trpc-agent-go",
+  "name": "trpc-agent-go",
+  "description": "tRPC agent for Go - gRPC to tRPC bridge implementation",
+  "local_repo_path": "/Users/congfei/work/trpc-agent-go",
+  "extract_api": true,
+  "include_readme": true,
+  "include_git_history": true,
+  "max_files": 100,
+  "rate_limit": 0.1,
+  "categories": {
+    "getting_started": ["README", "doc", "example"],
+    "api": ["api", "proto", "grpc", "trpc"],
+    "implementation": ["server", "client", "handler", "service"],
+    "configuration": ["config", "option", "setting"],
+    "testing": ["test", "spec", "mock"]
+  },
+  "exclude_dirs": [
+    "vendor", "node_modules", ".git", "build", "dist",
+    "_output", "bin", ".vscode", ".idea", "tmp", "temp"
+  ],
+  "file_extensions": [
+    ".go", ".proto", ".md", ".txt", ".yaml", ".yml", ".json", ".toml"
+  ]
+}

@@ -28,7 +28,7 @@ class ConfigValidator:
     VALID_SOURCE_TYPES = {'documentation', 'github', 'pdf'}
 
     # Valid merge modes
-    VALID_MERGE_MODES = {'rule-based', 'claude-enhanced'}
+    VALID_MERGE_MODES = {'rule-based', 'codebuddy-enhanced'}
 
     # Valid code analysis depth levels
     VALID_DEPTH_LEVELS = {'surface', 'deep', 'full'}

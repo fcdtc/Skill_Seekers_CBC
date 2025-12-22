@@ -1,7 +1,7 @@
 {
   "name": "godot",
   "description": "Complete Godot Engine knowledge base combining official documentation and source code analysis",
-  "merge_mode": "claude-enhanced",
+  "merge_mode": "codebuddy-enhanced",
   "sources": [
     {
       "type": "documentation",

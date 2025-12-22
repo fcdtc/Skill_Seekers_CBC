@@ -9,7 +9,7 @@ This is the main entry point for unified config workflow.
 
 Usage:
     skill-seekers unified --config configs/godot_unified.json
-    skill-seekers unified --config configs/react_unified.json --merge-mode claude-enhanced
+    skill-seekers unified --config configs/react_unified.json --merge-mode codebuddy-enhanced
 """
 
 import os
@@ -57,7 +57,7 @@ class UnifiedScraper:
 
         Args:
             config_path: Path to unified config JSON
-            merge_mode: Override config merge_mode ('rule-based' or 'claude-enhanced')
+            merge_mode: Override config merge_mode ('rule-based' or 'codebuddy-enhanced')
         """
         self.config_path = config_path
 
@@ -329,7 +329,7 @@ class UnifiedScraper:
             github_json = json.load(f)
 
         # Choose merger
-        if self.merge_mode == 'claude-enhanced':
+        if self.merge_mode == 'codebuddy-enhanced':
             merger = ClaudeEnhancedMerger(docs_json, github_json, conflicts)
         else:
             merger = RuleBasedMerger(docs_json, github_json, conflicts)
@@ -428,7 +428,7 @@ Examples:
   skill-seekers unified --config configs/godot_unified.json
 
   # Override merge mode
-  skill-seekers unified --config configs/react_unified.json --merge-mode claude-enhanced
+  skill-seekers unified --config configs/react_unified.json --merge-mode codebuddy-enhanced
 
   # Backward compatible with legacy configs
   skill-seekers unified --config configs/react.json
@@ -438,7 +438,7 @@ Examples:
     parser.add_argument('--config', '-c', required=True,
                        help='Path to unified config JSON file')
     parser.add_argument('--merge-mode', '-m',
-                       choices=['rule-based', 'claude-enhanced'],
+                       choices=['rule-based', 'codebuddy-enhanced'],
                        help='Override config merge mode')
 
     args = parser.parse_args()

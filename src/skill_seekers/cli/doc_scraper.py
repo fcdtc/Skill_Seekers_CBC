@@ -1456,7 +1456,7 @@ def setup_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--enhance', action='store_true',
                        help='Enhance SKILL.md using Claude API after building (requires API key)')
     parser.add_argument('--enhance-local', action='store_true',
-                       help='Enhance SKILL.md using Claude Code (no API key needed, runs in background)')
+                       help='Enhance SKILL.md using CodeBuddy Code (no API key needed, runs in background)')
     parser.add_argument('--interactive-enhancement', action='store_true',
                        help='Open terminal window for enhancement (use with --enhance-local)')
     parser.add_argument('--api-key', type=str,
@@ -1662,11 +1662,11 @@ def execute_scraping_and_building(config: Dict[str, Any], args: argparse.Namespa
 
 
 def execute_enhancement(config: Dict[str, Any], args: argparse.Namespace) -> None:
-    """Execute optional SKILL.md enhancement with Claude.
+    """Execute optional SKILL.md enhancement with CodeBuddy.
 
     Supports two enhancement modes:
     1. API-based enhancement (requires ANTHROPIC_API_KEY)
-    2. Local enhancement using Claude Code (no API key needed)
+    2. Local enhancement using CodeBuddy Code (no API key needed)
 
     Prints appropriate messages and suggestions based on whether
     enhancement was requested and whether it succeeded.
@@ -1701,13 +1701,13 @@ def execute_enhancement(config: Dict[str, Any], args: argparse.Namespace) -> Non
             logger.warning("\n⚠ enhance_skill.py not found. Run manually:")
             logger.info("  skill-seekers-enhance output/%s/", config['name'])
 
-    # Optional enhancement with Claude Code (local, no API key)
+    # Optional enhancement with CodeBuddy Code (local, no API key)
     if args.enhance_local:
         logger.info("\n" + "=" * 60)
         if args.interactive_enhancement:
-            logger.info("ENHANCING SKILL.MD WITH CLAUDE CODE (INTERACTIVE)")
+            logger.info("ENHANCING SKILL.MD WITH CODEBUDDY CODE (INTERACTIVE)")
         else:
-            logger.info("ENHANCING SKILL.MD WITH CLAUDE CODE (HEADLESS)")
+            logger.info("ENHANCING SKILL.MD WITH CODEBUDDY CODE (HEADLESS)")
         logger.info("=" * 60 + "\n")
 
         try:

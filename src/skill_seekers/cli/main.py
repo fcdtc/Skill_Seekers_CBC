@@ -119,14 +119,14 @@ For more information: https://github.com/yusufkaraaslan/Skill_Seekers
         description="Combine multiple sources into one skill"
     )
     unified_parser.add_argument("--config", required=True, help="Unified config JSON file")
-    unified_parser.add_argument("--merge-mode", help="Merge mode (rule-based, claude-enhanced)")
+    unified_parser.add_argument("--merge-mode", help="Merge mode (rule-based, codebuddy-enhanced)")
     unified_parser.add_argument("--dry-run", action="store_true", help="Dry run mode")
 
     # === enhance subcommand ===
     enhance_parser = subparsers.add_parser(
         "enhance",
         help="AI-powered enhancement (local, no API key)",
-        description="Enhance SKILL.md using Claude Code (local)"
+        description="Enhance SKILL.md using CodeBuddy Code (local)"
     )
     enhance_parser.add_argument("skill_directory", help="Skill directory path")
 
