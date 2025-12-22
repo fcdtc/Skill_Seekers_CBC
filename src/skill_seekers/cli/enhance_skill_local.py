@@ -166,12 +166,12 @@ First, backup the original to: {self.skill_md_path.with_suffix('.md.backup').abs
 
         return prompt
 
-    def run(self, headless=True, timeout=600):
+    def run(self, headless=True, timeout=3600):
         """Main enhancement workflow
 
         Args:
             headless: If True, run claude directly without opening terminal (default: True)
-            timeout: Maximum time to wait for enhancement in seconds (default: 600 = 10 minutes)
+            timeout: Maximum time to wait for enhancement in seconds (default: 3600 = 1 hour)
         """
         print(f"\n{'='*60}")
         print(f"LOCAL ENHANCEMENT: {self.skill_dir.name}")
@@ -433,8 +433,8 @@ Examples:
     parser.add_argument(
         '--timeout',
         type=int,
-        default=600,
-        help='Timeout in seconds for headless mode (default: 600 = 10 minutes)'
+        default=3600,
+        help='Timeout in seconds for headless mode (default: 3600 = 1 hour)'
     )
 
     args = parser.parse_args()
