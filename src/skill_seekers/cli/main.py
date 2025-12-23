@@ -129,6 +129,17 @@ For more information: https://github.com/yusufkaraaslan/Skill_Seekers
         description="Enhance SKILL.md using CodeBuddy Code (local)"
     )
     enhance_parser.add_argument("skill_directory", help="Skill directory path")
+    enhance_parser.add_argument(
+        '--interactive-enhancement',
+        action='store_true',
+        help='Open terminal window for enhancement (default: headless mode)'
+    )
+    enhance_parser.add_argument(
+        '--timeout',
+        type=int,
+        default=3600,
+        help='Timeout in seconds for headless mode (default: 3600 = 1 hour)'
+    )
 
     # === package subcommand ===
     package_parser = subparsers.add_parser(
@@ -303,6 +314,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         elif args.command == "enhance":
             from skill_seekers.cli.enhance_skill_local import main as enhance_main
             sys.argv = ["enhance_skill_local.py", args.skill_directory]
+            if args.interactive_enhancement:
+                sys.argv.append("--interactive-enhancement")
+            if args.timeout:
+                sys.argv.extend(["--timeout", str(args.timeout)])
             return enhance_main() or 0
 
         elif args.command == "package":
