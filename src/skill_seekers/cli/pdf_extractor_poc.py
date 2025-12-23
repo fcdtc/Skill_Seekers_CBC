@@ -748,8 +748,8 @@ class PDFExtractor:
         else:
             text = page.get_text("text")
 
-        # Extract markdown (better structure preservation)
-        markdown = page.get_text("markdown")
+        # Extract HTML (better structure preservation than text, markdown not supported)
+        html = page.get_text("html")
 
         # Extract tables (Priority 2)
         tables = self.extract_tables_from_page(page)
@@ -792,22 +792,24 @@ class PDFExtractor:
         # Sort by quality score (highest first)
         code_samples.sort(key=lambda x: x['quality_score'], reverse=True)
 
-        # Extract headings from markdown
+        # Extract headings from HTML
         headings = []
-        for line in markdown.split('\n'):
-            if line.startswith('#'):
-                level = len(line) - len(line.lstrip('#'))
-                text = line.lstrip('#').strip()
-                if text:
-                    headings.append({
-                        'level': f'h{level}',
-                        'text': text
-                    })
+        import re as html_re
+        # Match <h1>, <h2>, etc. tags in HTML
+        heading_pattern = html_re.compile(r'<h([1-6])[^>]*>(.*?)</h\1>', html_re.IGNORECASE | html_re.DOTALL)
+        for match in heading_pattern.finditer(html):
+            level = match.group(1)
+            text = html_re.sub(r'<[^>]+>', '', match.group(2)).strip()  # Remove any inner tags
+            if text:
+                headings.append({
+                    'level': f'h{level}',
+                    'text': text
+                })
 
         page_data = {
             'page_number': page_num + 1,  # 1-indexed for humans
             'text': text.strip(),
-            'markdown': markdown.strip(),
+            'html': html.strip(),
             'headings': headings,
             'code_samples': code_samples,
             'images_count': len(images),
