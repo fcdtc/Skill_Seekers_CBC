@@ -1,0 +1,31 @@
+{
+	"name": "trpc-go",
+	"description": "tRPC-Go framework example repository. Use for understanding tRPC-Go microservice patterns, server/client configuration, protocol usage (HTTP, gRPC, Streaming), plugin integration, and Go microservice best practices. Covers features like timeout control, load balancing, service discovery, tracing, monitoring, and advanced middleware patterns.",
+	"sources": [
+		{
+			"type": "github",
+			"repo": "trpc-go/trpc-go-example",
+			"local_repo_path": "/Users/congfei/work/trpc_learning/trpc-go-example",
+			"include_code": true,
+			"code_analysis_depth": "deep",
+			"include_issues": false,
+			"include_changelog": false,
+			"include_releases": false,
+			"exclude_dirs_additional": [
+				"vendor",
+				"testdata",
+				".git",
+				"tmp"
+			],
+			"file_patterns": [
+				"**/*.go",
+				"**/*.proto",
+				"**/*.yaml",
+				"**/*.yml",
+				"**/*.md"
+			]
+		}
+	],
+	"merge_mode": "rule-based",
+	"auto_upload": false
+}
