@@ -1,0 +1,28 @@
+{
+  "name": "unified-example-skill",
+  "description": "Example unified skill from PDF and local repository",
+  "merge_mode": "rule-based",
+  "sources": [
+    {
+      "type": "local",
+      "path": "./",
+      "description": "Local project repository",
+      "include_code": true,
+      "code_analysis_depth": "surface",
+      "include_tests": true,
+      "include_configs": true
+    },
+    {
+      "type": "pdf",
+      "path": "example.pdf",
+      "description": "Documentation PDF",
+      "extract_tables": true,
+      "extract_images": true
+    }
+  ],
+  "merge_options": {
+    "local_weight": 0.6,
+    "pdf_weight": 0.4,
+    "conflict_resolution": "local_priority"
+  }
+}

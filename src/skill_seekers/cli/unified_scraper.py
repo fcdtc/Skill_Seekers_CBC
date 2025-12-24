@@ -2,14 +2,14 @@
 """
 Unified Multi-Source Scraper
 
-Orchestrates scraping from multiple sources (documentation, GitHub, PDF),
+Orchestrates scraping from multiple sources (local repository, PDF),
 detects conflicts, merges intelligently, and builds unified skills.
 
 This is the main entry point for unified config workflow.
 
 Usage:
-    skill-seekers unified --config configs/godot_unified.json
-    skill-seekers unified --config configs/react_unified.json --merge-mode codebuddy-enhanced
+    skill-seekers unified --config configs/project_unified.json
+    skill-seekers unified --config configs/manual_unified.json --merge-mode codebuddy-enhanced
 """
 
 import os
@@ -45,7 +45,7 @@ class UnifiedScraper:
 
     Main workflow:
     1. Load and validate unified config
-    2. Scrape all sources (docs, GitHub, PDF)
+    2. Scrape all sources (local repository, PDF)
     3. Detect conflicts between sources
     4. Merge intelligently (rule-based or Claude-enhanced)
     5. Build unified skill
@@ -102,116 +102,84 @@ class UnifiedScraper:
             logger.info(f"\n[{i+1}/{len(sources)}] Scraping {source_type} source...")
 
             try:
-                if source_type == 'documentation':
-                    self._scrape_documentation(source)
-                elif source_type == 'github':
-                    self._scrape_github(source)
+                if source_type == 'local':
+                    self._scrape_local(source)
+                elif source_type in ['github', 'repository']:
+                    logger.warning(f"Source type '{source_type}' is no longer supported. Use 'local' type instead.")
+                    continue
+                elif source_type in ['documentation', 'docs', 'website']:
+                    logger.warning(f"Source type '{source_type}' is no longer supported. Use only 'local' and 'pdf' sources.")
+                    continue
                 elif source_type == 'pdf':
                     self._scrape_pdf(source)
                 else:
-                    logger.warning(f"Unknown source type: {source_type}")
+                    logger.warning(f"Unknown or unsupported source type: {source_type}")
             except Exception as e:
                 logger.error(f"Error scraping {source_type}: {e}")
                 logger.info("Continuing with other sources...")
 
         logger.info(f"\n✅ Scraped {len(self.scraped_data)} sources successfully")
 
-    def _scrape_documentation(self, source: Dict[str, Any]):
-        """Scrape documentation website."""
-        # Create temporary config for doc scraper
-        doc_config = {
-            'name': f"{self.name}_docs",
-            'base_url': source['base_url'],
-            'selectors': source.get('selectors', {}),
-            'url_patterns': source.get('url_patterns', {}),
-            'categories': source.get('categories', {}),
-            'rate_limit': source.get('rate_limit', 0.5),
-            'max_pages': source.get('max_pages', 100)
+    def _scrape_local(self, source: Dict[str, Any]):
+        """Scrape local repository."""
+        # Create temporary config for local scraper
+        local_config = {
+            'name': f"{self.name}_local",
+            'path': source['path'],
+            'description': source.get('description', f'Local repository for {self.name}'),
+            'include_code': source.get('include_code', True),
+            'code_analysis_depth': source.get('code_analysis_depth', 'surface'),
+            'include_tests': source.get('include_tests', True),
+            'include_configs': source.get('include_configs', True),
+            'exclude_dirs': source.get('exclude_dirs', []),
+            'exclude_dirs_additional': source.get('exclude_dirs_additional', [])
         }
 
         # Write temporary config
-        temp_config_path = os.path.join(self.data_dir, 'temp_docs_config.json')
+        temp_config_path = os.path.join(self.data_dir, 'temp_local_config.json')
         with open(temp_config_path, 'w') as f:
-            json.dump(doc_config, f, indent=2)
+            json.dump(local_config, f, indent=2)
 
-        # Run doc_scraper as subprocess
-        logger.info(f"Scraping documentation from {source['base_url']}")
+        # Run local_scraper as subprocess
+        logger.info(f"Scraping local repository from {source['path']}")
 
-        doc_scraper_path = Path(__file__).parent / "doc_scraper.py"
-        cmd = [sys.executable, str(doc_scraper_path), '--config', temp_config_path]
+        local_scraper_path = Path(__file__).parent / "local_scraper.py"
+        cmd = [sys.executable, str(local_scraper_path), '--config', temp_config_path]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            logger.error(f"Documentation scraping failed: {result.stderr}")
+            logger.error(f"Local repository scraping failed: {result.stderr}")
             return
 
         # Load scraped data
-        docs_data_file = f"output/{doc_config['name']}_data/summary.json"
+        local_data_file = f"output/{local_config['name']}_local_data.json"
 
-        if os.path.exists(docs_data_file):
-            with open(docs_data_file, 'r') as f:
-                summary = json.load(f)
+        if os.path.exists(local_data_file):
+            with open(local_data_file, 'r') as f:
+                local_data = json.load(f)
 
-            self.scraped_data['documentation'] = {
-                'pages': summary.get('pages', []),
-                'data_file': docs_data_file
+            self.scraped_data['local'] = {
+                'data': local_data,
+                'data_file': local_data_file
             }
 
-            logger.info(f"✅ Documentation: {summary.get('total_pages', 0)} pages scraped")
+            # Log statistics
+            repo_info = local_data.get('repository', {})
+            readme_count = len(local_data.get('readme_files', []))
+            file_count = len(local_data.get('file_tree', []))
+
+            logger.info(f"✅ Local repository: {repo_info.get('name', 'Unknown')} scraped")
+            logger.info(f"   README files: {readme_count}")
+            logger.info(f"   Total files: {file_count}")
         else:
-            logger.warning("Documentation data file not found")
+            logger.warning("Local repository data file not found")
 
         # Clean up temp config
         if os.path.exists(temp_config_path):
             os.remove(temp_config_path)
 
-    def _scrape_github(self, source: Dict[str, Any]):
-        """Scrape GitHub repository."""
-        try:
-            from skill_seekers.cli.github_scraper import GitHubScraper
-        except ImportError:
-            logger.error("github_scraper.py not found")
-            return
-
-        # Create config for GitHub scraper
-        github_config = {
-            'repo': source['repo'],
-            'name': f"{self.name}_github",
-            'github_token': source.get('github_token'),
-            'include_issues': source.get('include_issues', True),
-            'max_issues': source.get('max_issues', 100),
-            'include_changelog': source.get('include_changelog', True),
-            'include_releases': source.get('include_releases', True),
-            'include_code': source.get('include_code', True),
-            'code_analysis_depth': source.get('code_analysis_depth', 'surface'),
-            'file_patterns': source.get('file_patterns', []),
-            'local_repo_path': source.get('local_repo_path')  # Pass local_repo_path from config
-        }
-
-        # Pass directory exclusions if specified (optional)
-        if 'exclude_dirs' in source:
-            github_config['exclude_dirs'] = source['exclude_dirs']
-        if 'exclude_dirs_additional' in source:
-            github_config['exclude_dirs_additional'] = source['exclude_dirs_additional']
-
-        # Scrape
-        logger.info(f"Scraping GitHub repository: {source['repo']}")
-        scraper = GitHubScraper(github_config)
-        github_data = scraper.scrape()
-
-        # Save data
-        github_data_file = os.path.join(self.data_dir, 'github_data.json')
-        with open(github_data_file, 'w') as f:
-            json.dump(github_data, f, indent=2, ensure_ascii=False)
-
-        self.scraped_data['github'] = {
-            'data': github_data,
-            'data_file': github_data_file
-        }
-
-        logger.info(f"✅ GitHub: Repository scraped successfully")
-
+    
     def _scrape_pdf(self, source: Dict[str, Any]):
         """Scrape PDF document."""
         try:
@@ -223,16 +191,23 @@ class UnifiedScraper:
         # Create config for PDF scraper
         pdf_config = {
             'name': f"{self.name}_pdf",
-            'pdf': source['path'],
-            'extract_tables': source.get('extract_tables', False),
-            'ocr': source.get('ocr', False),
-            'password': source.get('password')
+            'pdf_path': source['path'],
+            'description': source.get('description', f'PDF documentation for {self.name}'),
+            'extract_options': {
+                'extract_tables': source.get('extract_tables', False),
+                'ocr': source.get('ocr', False),
+                'password': source.get('password'),
+                'chunk_size': source.get('chunk_size', 10),
+                'min_quality': source.get('min_quality', 5.0),
+                'extract_images': source.get('extract_images', True),
+                'min_image_size': source.get('min_image_size', 100)
+            }
         }
 
         # Scrape
         logger.info(f"Scraping PDF: {source['path']}")
         converter = PDFToSkillConverter(pdf_config)
-        pdf_data = converter.extract_all()
+        pdf_data = converter.extract_pdf()
 
         # Save data
         pdf_data_file = os.path.join(self.data_dir, 'pdf_data.json')

@@ -8,22 +8,20 @@ Usage:
     skill-seekers <command> [options]
 
 Commands:
-    scrape        Scrape documentation website
-    github        Scrape GitHub repository
     pdf           Extract from PDF file
-    unified       Multi-source scraping (docs + GitHub + PDF)
+    local         Scrape local repository
+    unified       Multi-source scraping (PDF + local repo)
     enhance       AI-powered enhancement (local, no API key)
     package       Package skill into .zip file
     upload        Upload skill to Claude
-    estimate      Estimate page count before scraping
     install-agent Install skill to AI agent directories
 
 Examples:
-    skill-seekers scrape --config configs/react.json
-    skill-seekers github --repo microsoft/TypeScript
-    skill-seekers unified --config configs/react_unified.json
-    skill-seekers package output/react/
-    skill-seekers install-agent output/react/ --agent cursor
+    skill-seekers pdf --pdf docs.pdf --name my-docs
+    skill-seekers local --path ./my-project --name my-project
+    skill-seekers unified --config configs/project_unified.json
+    skill-seekers package output/my-project/
+    skill-seekers install-agent output/my-project/ --agent cursor
 """
 
 import sys
@@ -35,25 +33,25 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the main argument parser with subcommands."""
     parser = argparse.ArgumentParser(
         prog="skill-seekers",
-        description="Convert documentation, GitHub repos, and PDFs into Claude AI skills",
+        description="Convert local repositories and PDFs into Claude AI skills",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Scrape documentation
-  skill-seekers scrape --config configs/react.json
+  # Extract from PDF
+  skill-seekers pdf --pdf docs.pdf --name my-docs
 
-  # Scrape GitHub repository
-  skill-seekers github --repo microsoft/TypeScript --name typescript
+  # Scrape local repository
+  skill-seekers local --path ./my-project --name my-project
 
   # Multi-source scraping (unified)
-  skill-seekers unified --config configs/react_unified.json
+  skill-seekers unified --config configs/project_unified.json
 
   # AI-powered enhancement
-  skill-seekers enhance output/react/
+  skill-seekers enhance output/my-project/
 
   # Package and upload
-  skill-seekers package output/react/
-  skill-seekers upload output/react.zip
+  skill-seekers package output/my-project/
+  skill-seekers upload output/my-project.zip
 
 For more information: https://github.com/yusufkaraaslan/Skill_Seekers
         """
@@ -72,33 +70,16 @@ For more information: https://github.com/yusufkaraaslan/Skill_Seekers
         help="Command to run"
     )
 
-    # === scrape subcommand ===
-    scrape_parser = subparsers.add_parser(
-        "scrape",
-        help="Scrape documentation website",
-        description="Scrape documentation website and generate skill"
+    # === local subcommand ===
+    local_parser = subparsers.add_parser(
+        "local",
+        help="Scrape local repository",
+        description="Scrape local repository and generate skill"
     )
-    scrape_parser.add_argument("--config", help="Config JSON file")
-    scrape_parser.add_argument("--name", help="Skill name")
-    scrape_parser.add_argument("--url", help="Documentation URL")
-    scrape_parser.add_argument("--description", help="Skill description")
-    scrape_parser.add_argument("--skip-scrape", action="store_true", help="Skip scraping, use cached data")
-    scrape_parser.add_argument("--enhance", action="store_true", help="AI enhancement (API)")
-    scrape_parser.add_argument("--enhance-local", action="store_true", help="AI enhancement (local)")
-    scrape_parser.add_argument("--dry-run", action="store_true", help="Dry run mode")
-    scrape_parser.add_argument("--async", dest="async_mode", action="store_true", help="Use async scraping")
-    scrape_parser.add_argument("--workers", type=int, help="Number of async workers")
-
-    # === github subcommand ===
-    github_parser = subparsers.add_parser(
-        "github",
-        help="Scrape GitHub repository",
-        description="Scrape GitHub repository and generate skill"
-    )
-    github_parser.add_argument("--config", help="Config JSON file")
-    github_parser.add_argument("--repo", help="GitHub repo (owner/repo)")
-    github_parser.add_argument("--name", help="Skill name")
-    github_parser.add_argument("--description", help="Skill description")
+    local_parser.add_argument("--config", help="Config JSON file")
+    local_parser.add_argument("--path", help="Local repository path")
+    local_parser.add_argument("--name", help="Skill name")
+    local_parser.add_argument("--description", help="Skill description")
 
     # === pdf subcommand ===
     pdf_parser = subparsers.add_parser(
@@ -115,8 +96,8 @@ For more information: https://github.com/yusufkaraaslan/Skill_Seekers
     # === unified subcommand ===
     unified_parser = subparsers.add_parser(
         "unified",
-        help="Multi-source scraping (docs + GitHub + PDF)",
-        description="Combine multiple sources into one skill"
+        help="Multi-source scraping (PDF + local repo)",
+        description="Combine PDF and local repository into one skill"
     )
     unified_parser.add_argument("--config", required=True, help="Unified config JSON file")
     unified_parser.add_argument("--merge-mode", help="Merge mode (rule-based, codebuddy-enhanced)")
@@ -160,15 +141,7 @@ For more information: https://github.com/yusufkaraaslan/Skill_Seekers
     upload_parser.add_argument("zip_file", help=".zip file to upload")
     upload_parser.add_argument("--api-key", help="Anthropic API key")
 
-    # === estimate subcommand ===
-    estimate_parser = subparsers.add_parser(
-        "estimate",
-        help="Estimate page count before scraping",
-        description="Estimate total pages for documentation scraping"
-    )
-    estimate_parser.add_argument("config", help="Config JSON file")
-    estimate_parser.add_argument("--max-discovery", type=int, help="Max pages to discover")
-
+    
     # === install-agent subcommand ===
     install_agent_parser = subparsers.add_parser(
         "install-agent",
@@ -248,44 +221,18 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Delegate to the appropriate tool
     try:
-        if args.command == "scrape":
-            from skill_seekers.cli.doc_scraper import main as scrape_main
-            # Convert args namespace to sys.argv format for doc_scraper
-            sys.argv = ["doc_scraper.py"]
+        if args.command == "local":
+            from skill_seekers.cli.local_scraper import main as local_main
+            sys.argv = ["local_scraper.py"]
             if args.config:
                 sys.argv.extend(["--config", args.config])
-            if args.name:
-                sys.argv.extend(["--name", args.name])
-            if args.url:
-                sys.argv.extend(["--url", args.url])
-            if args.description:
-                sys.argv.extend(["--description", args.description])
-            if args.skip_scrape:
-                sys.argv.append("--skip-scrape")
-            if args.enhance:
-                sys.argv.append("--enhance")
-            if args.enhance_local:
-                sys.argv.append("--enhance-local")
-            if args.dry_run:
-                sys.argv.append("--dry-run")
-            if args.async_mode:
-                sys.argv.append("--async")
-            if args.workers:
-                sys.argv.extend(["--workers", str(args.workers)])
-            return scrape_main() or 0
-
-        elif args.command == "github":
-            from skill_seekers.cli.github_scraper import main as github_main
-            sys.argv = ["github_scraper.py"]
-            if args.config:
-                sys.argv.extend(["--config", args.config])
-            if args.repo:
-                sys.argv.extend(["--repo", args.repo])
+            if args.path:
+                sys.argv.extend(["--path", args.path])
             if args.name:
                 sys.argv.extend(["--name", args.name])
             if args.description:
                 sys.argv.extend(["--description", args.description])
-            return github_main() or 0
+            return local_main() or 0
 
         elif args.command == "pdf":
             from skill_seekers.cli.pdf_scraper import main as pdf_main
@@ -336,13 +283,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 sys.argv.extend(["--api-key", args.api_key])
             return upload_main() or 0
 
-        elif args.command == "estimate":
-            from skill_seekers.cli.estimate_pages import main as estimate_main
-            sys.argv = ["estimate_pages.py", args.config]
-            if args.max_discovery:
-                sys.argv.extend(["--max-discovery", str(args.max_discovery)])
-            return estimate_main() or 0
-
+        
         elif args.command == "install-agent":
             from skill_seekers.cli.install_agent import main as install_agent_main
             sys.argv = ["install_agent.py", args.skill_directory, "--agent", args.agent]

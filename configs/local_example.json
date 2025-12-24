@@ -1,0 +1,14 @@
+{
+  "name": "local-example-skill",
+  "description": "Example skill from local repository",
+  "path": "./",
+  "include_code": true,
+  "code_analysis_depth": "surface",
+  "include_tests": true,
+  "include_configs": true,
+  "exclude_dirs_additional": [
+    "__pycache__",
+    "node_modules",
+    ".git"
+  ]
+}

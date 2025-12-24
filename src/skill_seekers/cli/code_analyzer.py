@@ -93,6 +93,8 @@ class CodeAnalyzer:
                 return self._analyze_javascript(content, file_path)
             elif language in ['C', 'C++']:
                 return self._analyze_cpp(content, file_path)
+            elif language == 'Go':
+                return self._analyze_go(content, file_path)
             else:
                 logger.debug(f"No analyzer for language: {language}")
                 return {}
@@ -423,6 +425,207 @@ class CodeAnalyzer:
             'classes': classes,
             'functions': functions
         }
+
+    def _analyze_go(self, content: str, file_path: str) -> Dict[str, Any]:
+        """
+        Analyze Go file using regex patterns.
+
+        Note: This is a simplified approach for Go function and struct extraction.
+        For production, consider using a proper Go parser.
+        """
+        functions = []
+        structs = []
+
+        # Extract function definitions including methods
+        func_pattern = r'func\s+(?:\([^)]+\)\s+)?(\w+)\s*\(([^)]*)\)(?:\s*[^{]*)?'
+        for match in re.finditer(func_pattern, content):
+            func_name = match.group(1)
+            params_str = match.group(2)
+
+            # Skip if this looks like a Go keyword
+            if func_name in ['if', 'for', 'switch', 'select', 'return']:
+                continue
+
+            params = self._parse_go_parameters(params_str)
+
+            functions.append({
+                'name': func_name,
+                'parameters': params,
+                'return_type': None,  # Go return types are complex to parse simply
+                'docstring': None,
+                'line_number': content[:match.start()].count('\n') + 1,
+                'is_async': False,
+                'is_method': match.group(0).startswith('func ('),  # Methods have receivers
+                'decorators': []
+            })
+
+        # Extract struct definitions
+        struct_pattern = r'type\s+(\w+)\s+struct\s*\{'
+        for match in re.finditer(struct_pattern, content):
+            struct_name = match.group(1)
+
+            structs.append({
+                'name': struct_name,
+                'base_classes': [],  # Go doesn't have inheritance
+                'methods': [],  # Methods are defined separately
+                'docstring': None,
+                'line_number': content[:match.start()].count('\n') + 1
+            })
+
+        return {
+            'classes': structs,  # Treat structs as classes for consistency
+            'functions': functions
+        }
+
+    def _parse_go_parameters(self, params_str: str) -> List[Dict]:
+        """Parse Go parameter string."""
+        params = []
+
+        if not params_str.strip():
+            return params
+
+        # Go parameter format: name type, name type, or name, name type
+        param_list = [p.strip() for p in params_str.split(',')]
+
+        for param in param_list:
+            if not param:
+                continue
+
+            parts = param.split()
+            if len(parts) >= 2:
+                # name type
+                param_name = parts[0]
+                param_type = ' '.join(parts[1:])
+            elif len(parts) == 1:
+                # Single word - could be name with implicit type or just type
+                param_name = parts[0]
+                param_type = "interface{}"  # Default Go type
+            else:
+                continue
+
+            params.append({
+                'name': param_name,
+                'type_hint': param_type,
+                'default': None
+            })
+
+        return params
+
+    def extract_signatures(self, content: str, file_path: str) -> List[Dict[str, Any]]:
+        """
+        Extract signatures from file content based on configured depth.
+
+        Args:
+            content: File content to analyze
+            file_path: Path to the file (for language detection)
+
+        Returns:
+            List of signature dictionaries
+        """
+        if self.depth == 'surface':
+            return []
+
+        # Determine language from file extension
+        language = self._get_language_from_path(file_path)
+
+        # Analyze file
+        result = self.analyze_file(file_path, content, language)
+
+        # Convert result to flat list of signatures
+        signatures = []
+
+        # Add function signatures
+        for func in result.get('functions', []):
+            signatures.append({
+                'type': 'function',
+                'name': func['name'],
+                'file_path': file_path,
+                'line_number': func.get('line_number'),
+                'signature': self._format_function_signature(func),
+                'parameters': func.get('parameters', []),
+                'return_type': func.get('return_type'),
+                'docstring': func.get('docstring'),
+                'is_async': func.get('is_async', False),
+                'is_method': func.get('is_method', False),
+                'language': language
+            })
+
+        # Add class signatures
+        for cls in result.get('classes', []):
+            signatures.append({
+                'type': 'class',
+                'name': cls['name'],
+                'file_path': file_path,
+                'line_number': cls.get('line_number'),
+                'signature': self._format_class_signature(cls),
+                'base_classes': cls.get('base_classes', []),
+                'methods': cls.get('methods', []),
+                'docstring': cls.get('docstring'),
+                'language': language
+            })
+
+        return signatures
+
+    def _get_language_from_path(self, file_path: str) -> str:
+        """Determine programming language from file path."""
+        extension = file_path.lower().split('.')[-1] if '.' in file_path else ''
+
+        language_map = {
+            'py': 'Python',
+            'js': 'JavaScript',
+            'ts': 'TypeScript',
+            'jsx': 'JavaScript',
+            'tsx': 'TypeScript',
+            'h': 'C',
+            'hpp': 'C++',
+            'c': 'C',
+            'cpp': 'C++',
+            'cc': 'C++',
+            'cxx': 'C++',
+            'go': 'Go'
+        }
+
+        return language_map.get(extension, 'Unknown')
+
+    def _format_function_signature(self, func: Dict[str, Any]) -> str:
+        """Format a function signature as a string."""
+        parts = []
+
+        if func.get('is_async'):
+            parts.append('async')
+
+        parts.append(f"def {func['name']}(")
+
+        # Format parameters
+        params = []
+        for param in func.get('parameters', []):
+            param_str = param['name']
+            if param.get('type_hint'):
+                param_str += f": {param['type_hint']}"
+            if param.get('default'):
+                param_str += f" = {param['default']}"
+            params.append(param_str)
+
+        parts.append(', '.join(params))
+        parts.append(')')
+
+        # Add return type
+        if func.get('return_type'):
+            parts.append(f" -> {func['return_type']}")
+
+        return ''.join(parts)
+
+    def _format_class_signature(self, cls: Dict[str, Any]) -> str:
+        """Format a class signature as a string."""
+        signature = f"class {cls['name']}"
+
+        base_classes = cls.get('base_classes', [])
+        if base_classes:
+            signature += f"({', '.join(base_classes)})"
+
+        signature += ":"
+
+        return signature
 
     def _parse_cpp_parameters(self, params_str: str) -> List[Dict]:
         """Parse C++ parameter string."""
