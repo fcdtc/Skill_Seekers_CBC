@@ -34,6 +34,9 @@ cd Skill_Seekers_CBC
 
 # 安装依赖
 pip install -r requirements.txt
+
+# 安装项目（使用 -e 进行开发模式安装，或直接安装）
+pip3 install -e .
 ```
 
 ### 第二步：创建配置文件
@@ -96,26 +99,20 @@ pip install -r requirements.txt
 
 #### 本地仓库抓取
 ```bash
-python -m src.skill_seekers.cli.main local --config configs/local_repo.json
+skill-seekers local --config configs/local_repo.json
 ```
 
 #### PDF文档抓取
 ```bash
-python -m src.skill_seekers.cli.main pdf --config configs/pdf_doc.json
+skill-seekers pdf --config configs/pdf_doc.json
 ```
 
 #### 混合源抓取
 ```bash
-python -m src.skill_seekers.cli.main unified --config configs/unified.json
+skill-seekers unified --config configs/unified.json
 ```
 
-### 第四步：构建技能
-
-如果只生成了数据文件（`.json`），需要手动构建技能：
-
-```bash
-python src/skill_seekers/cli/build_local_skill.py output/your_data.json
-```
+**注意**：本地仓库抓取和 PDF 抓取现在会自动构建技能，无需额外步骤。
 
 ### 第五步：AI增强（可选）
 
@@ -125,11 +122,19 @@ skill-seekers enhance output/trpc-go-examples/ --interactive-enhancement
 
 **注意**：此步骤依赖 CodeBuddy Code 服务，如果服务不可用可跳过。
 
-### 第六步：质量检验和打包
+### 第四步：AI增强（可选）
+
+```bash
+skill-seekers enhance output/trpc-go-examples/ --interactive-enhancement
+```
+
+**注意**：此步骤依赖 CodeBuddy Code 服务，如果服务不可用可跳过。
+
+### 第五步：质量检验和打包
 
 ```bash
 # 打包技能
-echo "y" | python -m src.skill_seekers.cli.main package output/your_skill_directory
+skill-seekers package output/your_skill_directory
 ```
 
 打包成功后会显示质量评分，生成的 `.zip` 文件可直接上传到 Claude。
@@ -138,40 +143,58 @@ echo "y" | python -m src.skill_seekers.cli.main package output/your_skill_direct
 
 ### 主命令
 ```bash
-python -m src.skill_seekers.cli.main [子命令] [选项]
+skill-seekers [子命令] [选项]
 ```
 
 ### 子命令说明
 
 #### `local` - 本地仓库抓取
 ```bash
-python -m src.skill_seekers.cli.main local --config CONFIG_FILE
+skill-seekers local --config CONFIG_FILE
 ```
 - `--config`: 配置文件路径（必需）
+- `--path`: 本地仓库路径（可在配置文件中指定）
+- `--name`: 技能名称（可在配置文件中指定）
+- `--description`: 技能描述（可在配置文件中指定）
 
 #### `pdf` - PDF文档抓取
 ```bash
-python -m src.skill_seekers.cli.main pdf --config CONFIG_FILE
+skill-seekers pdf --config CONFIG_FILE
 ```
-- `--config`: 配置文件文件路径（必需）
+- `--config`: 配置文件路径（必需）
+- `--pdf`: PDF文件路径（可在配置文件中指定）
+- `--name`: 技能名称（可在配置文件中指定）
+- `--description`: 技能描述（可在配置文件中指定）
 
 #### `unified` - 混合源抓取
 ```bash
-python -m src.skill_seekers.cli.main unified --config CONFIG_FILE
+skill-seekers unified --config CONFIG_FILE
 ```
 - `--config`: 配置文件路径（必需）
+- `--merge-mode`: 合并模式（可选：rule-based, codebuddy-enhanced）
 
 #### `enhance` - AI增强
 ```bash
-python -m src.skill_seekers.cli.main enhance SKILL_DIRECTORY
+skill-seekers enhance SKILL_DIRECTORY
 ```
-- `位置参数`: 技能目录路径
+- 位置参数: 技能目录路径
+- `--interactive-enhancement`: 打开终端窗口进行增强
+- `--timeout`: 超时时间（秒，默认3600）
 
 #### `package` - 打包发布
 ```bash
-python -m src.skill_seekers.cli.main package SKILL_DIRECTORY
+skill-seekers package SKILL_DIRECTORY
 ```
-- `位置参数`: 技能目录路径
+- 位置参数: 技能目录路径
+- `--no-open`: 打包后不打开输出文件夹
+- `--upload`: 自动上传到 Claude
+
+#### `upload` - 上传技能
+```bash
+skill-seekers upload ZIP_FILE
+```
+- 位置参数: ZIP文件路径
+- `--api-key`: Anthropic API密钥
 
 ## 配置参数详解
 
@@ -229,12 +252,12 @@ output/skill_name/
 
 ## 常见问题解决
 
-### 1. 技能目录未生成
-**问题**：执行抓取命令后没有生成 output 目录
+### 1. 命令未找到
+**问题**：执行 `skill-seekers` 命令时报"command not found"
 
-**解决**：手动构建技能
+**解决**：确保已安装项目
 ```bash
-python src/skill_seekers/cli/build_local_skill.py output/your_data.json
+pip3 install -e .
 ```
 
 ### 2. AI增强失败
@@ -299,14 +322,14 @@ cat > configs/trpc-go-examples.json << EOF
 }
 EOF
 
-# 2. 执行抓取
-python -m src.skill_seekers.cli.main local --config configs/trpc-go-examples.json
+# 2. 执行抓取（自动构建技能）
+skill-seekers local --config configs/trpc-go-examples.json
 
-# 3. 构建技能
-python src/skill_seekers/cli/build_local_skill.py output/trpc-go-examples_local_data.json
+# 3. 可选：AI增强
+skill-seekers enhance output/trpc-go-examples/
 
 # 4. 打包发布
-echo "y" | python -m src.skill_seekers.cli.main package output/trpc-go-examples
+skill-seekers package output/trpc-go-examples
 
 # 5. 上传到 Claude
 # 访问 https://claude.ai/skills 上传生成的 zip 文件
@@ -315,13 +338,13 @@ echo "y" | python -m src.skill_seekers.cli.main package output/trpc-go-examples
 ## 技术支持
 
 如遇问题，请检查：
-1. Python 环境（建议 Python 3.8+）
+1. Python 环境（建议 Python 3.10+）
 2. 依赖包安装完整性
 3. 文件路径和权限
 4. 配置文件格式正确性
 
 ---
 
-**版本**: 1.0.0
-**更新日期**: 2025-12-24
+**版本**: 2.0.0
+**更新日期**: 2025-12-26
 **作者**: Skill Seekers Team
