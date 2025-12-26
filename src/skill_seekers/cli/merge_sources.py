@@ -192,9 +192,9 @@ class RuleBasedMerger:
 
 class ClaudeEnhancedMerger:
     """
-    CodeBuddy-enhanced API merger using local CodeBuddy Code.
+    Claude-enhanced API merger using local Claude Code.
 
-    Opens CodeBuddy Code in a new terminal to intelligently reconcile conflicts.
+    Opens Claude Code in a new terminal to intelligently reconcile conflicts.
     Uses the same approach as enhance_skill_local.py.
     """
 
@@ -226,9 +226,9 @@ class ClaudeEnhancedMerger:
         # Create temporary workspace
         workspace_dir = self._create_workspace()
 
-        # Launch CodeBuddy Code for enhancement
-        logger.info("Launching CodeBuddy Code for intelligent merging...")
-        logger.info("CodeBuddy will analyze conflicts and create reconciled API reference")
+        # Launch Claude Code for enhancement
+        logger.info("Launching Claude Code for intelligent merging...")
+        logger.info("Claude will analyze conflicts and create reconciled API reference")
 
         try:
             self._launch_claude_merge(workspace_dir)
@@ -236,11 +236,11 @@ class ClaudeEnhancedMerger:
             # Read enhanced results
             merged_data = self._read_merged_results(workspace_dir)
 
-            logger.info("CodeBuddy-enhanced merge complete")
+            logger.info("Claude-enhanced merge complete")
             return merged_data
 
         except Exception as e:
-            logger.error(f"CodeBuddy enhancement failed: {e}")
+            logger.error(f"Claude enhancement failed: {e}")
             logger.info("Falling back to rule-based merge")
             return self.rule_merger.merge_all()
 
@@ -260,7 +260,7 @@ class ClaudeEnhancedMerger:
         return workspace
 
     def _write_context_files(self, workspace: str):
-        """Write context files for CodeBuddy to analyze."""
+        """Write context files for Claude to analyze."""
 
         # 1. Write conflicts summary
         conflicts_file = os.path.join(workspace, 'conflicts.json')
@@ -285,7 +285,7 @@ class ClaudeEnhancedMerger:
         with open(code_apis_file, 'w') as f:
             json.dump(detector.code_apis, f, indent=2)
 
-        # 4. Write merge instructions for CodeBuddy
+        # 4. Write merge instructions for Claude
         instructions = """# API Merge Task
 
 You are merging API documentation from two sources:
@@ -359,15 +359,15 @@ Take your time to analyze each conflict carefully. The goal is to create the mos
 
     def _launch_claude_merge(self, workspace: str):
         """
-        Launch CodeBuddy Code to perform merge.
+        Launch Claude Code to perform merge.
 
         Similar to enhance_skill_local.py approach.
         """
-        # Create a script that CodeBuddy will execute
+        # Create a script that Claude will execute
         script_path = os.path.join(workspace, 'merge_script.sh')
 
         script_content = f"""#!/bin/bash
-# Automatic merge script for CodeBuddy Code
+# Automatic merge script for Claude Code
 
 cd "{workspace}"
 
@@ -392,7 +392,7 @@ read -p "Press Enter when merge is complete..."
 
         os.chmod(script_path, 0o755)
 
-        # Open new terminal with CodeBuddy Code
+        # Open new terminal with Claude Code
         # Try different terminal emulators
         terminals = [
             ['x-terminal-emulator', '-e'],
@@ -424,7 +424,7 @@ read -p "Press Enter when merge is complete..."
             elapsed += 5
 
         if not os.path.exists(merged_file):
-            raise TimeoutError("CodeBuddy merge timed out after 1 hour")
+            raise TimeoutError("Claude merge timed out after 1 hour")
 
     def _read_merged_results(self, workspace: str) -> Dict[str, Any]:
         """Read merged results from workspace."""
@@ -437,7 +437,7 @@ read -p "Press Enter when merge is complete..."
             merged_data = json.load(f)
 
         return {
-            'merge_mode': 'codebuddy-enhanced',
+            'merge_mode': 'claude-enhanced',
             **merged_data
         }
 
@@ -453,7 +453,7 @@ def merge_sources(docs_data_path: str,
         docs_data_path: Path to documentation data JSON
         github_data_path: Path to GitHub data JSON
         output_path: Path to save merged output
-        mode: 'rule-based' or 'codebuddy-enhanced'
+        mode: 'rule-based' or 'claude-enhanced'
 
     Returns:
         Merged data dict
@@ -472,7 +472,7 @@ def merge_sources(docs_data_path: str,
     logger.info(f"Detected {len(conflicts)} conflicts")
 
     # Merge based on mode
-    if mode == 'codebuddy-enhanced':
+    if mode == 'claude-enhanced':
         merger = ClaudeEnhancedMerger(docs_data, github_data, conflicts)
     else:
         merger = RuleBasedMerger(docs_data, github_data, conflicts)
@@ -495,7 +495,7 @@ if __name__ == '__main__':
     parser.add_argument('docs_data', help='Path to documentation data JSON')
     parser.add_argument('github_data', help='Path to GitHub data JSON')
     parser.add_argument('--output', '-o', default='merged_data.json', help='Output file path')
-    parser.add_argument('--mode', '-m', choices=['rule-based', 'codebuddy-enhanced'],
+    parser.add_argument('--mode', '-m', choices=['rule-based', 'claude-enhanced'],
                        default='rule-based', help='Merge mode')
 
     args = parser.parse_args()
