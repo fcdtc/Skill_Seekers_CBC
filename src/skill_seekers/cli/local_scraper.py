@@ -45,6 +45,14 @@ except ImportError:
     CODE_ANALYZER_AVAILABLE = False
     logger.warning("Code analyzer not available - deep analysis disabled")
 
+# Import skill builder for automatic skill generation
+try:
+    from .build_local_skill import LocalSkillBuilder
+    SKILL_BUILDER_AVAILABLE = True
+except ImportError:
+    SKILL_BUILDER_AVAILABLE = False
+    logger.warning("Skill builder not available - automatic generation disabled")
+
 # Directories to exclude from local repository analysis
 EXCLUDED_DIRS = {
     'venv', 'env', '.venv', '.env',  # Virtual environments
@@ -565,13 +573,23 @@ def main():
         config['output_dir'] = args.output
 
     try:
-        # Create scraper and run
+        # Step 1: Create scraper and scan
         scraper = LocalScraper(config)
         scraper.scrape()
 
         print(f"\n✅ Successfully scraped local repository: {scraper.name}")
-        print(f"📁 Output saved to: {scraper.data_file}")
-        print(f"🎯 Skill directory: {scraper.skill_dir}")
+        print(f"📁 Data file: {scraper.data_file}")
+
+        # Step 2: Build skill automatically
+        if SKILL_BUILDER_AVAILABLE:
+            logger.info("Building skill from extracted data...")
+            builder = LocalSkillBuilder(scraper.data_file, config.get('output_dir'))
+            builder.build_skill()
+            print(f"📁 Skill built at: {builder.output_dir}")
+        else:
+            logger.warning("Skill builder not available. Run manually:")
+            print(f"   python -m skill_seekers.cli.build_local_skill {scraper.data_file}")
+            print(f"🎯 Skill directory: {scraper.skill_dir}")
 
         return 0
 
