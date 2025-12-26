@@ -1,10 +1,10 @@
 {
-	"name": "trpc-go-examples",
+	"name": "trpc-go",
 	"description": "tRPC-Go framework examples and tutorials - comprehensive guide for Go microservices with tRPC",
-	"path": "/Users/congfei/work/trpc_learning/trpc-go-example",
+	"path": "/Users/congfei/work/trpc_learning/trpc-go",
 	"include_code": true,
 	"code_analysis_depth": "deep",
-	"include_tests": false,
+	"include_tests": true,
 	"include_configs": true,
 	"exclude_dirs_additional": [
 		".DS_Store"

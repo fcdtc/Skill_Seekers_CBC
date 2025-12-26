@@ -175,7 +175,7 @@ skill-seekers unified --config CONFIG_FILE
 
 #### `enhance` - AI增强
 ```bash
-skill-seekers enhance SKILL_DIRECTORY
+skill-seekers enhance SKILL_DIRECTORY --interactive-enhancement
 ```
 - 位置参数: 技能目录路径
 - `--interactive-enhancement`: 打开终端窗口进行增强
